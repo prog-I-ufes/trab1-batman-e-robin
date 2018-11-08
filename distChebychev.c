@@ -2,26 +2,23 @@
 #include <stdlib.h>
 #include <math.h>
 
-
-float distEuclideana( int* vetor1, int* vetor2, int tamanho )
+float distChebychev( int* vetor1, int* vetor2, int tamanho )
 {
     int i;
     float distancia, somatorio = 0;
 
     for ( i = 0 ; i < tamanho ; i++ )
     {
-      somatorio = somatorio + pow ( (vetor2[i] - vetor1[i]), 2) ;
+        
     }
-    distancia = sqrt (somatorio);
 
     return distancia;
 }
 
 int main()
 {
-  //Testando apenas as distancias
     int i, tamVet, *vet1, *vet2;
-    float distanciaE;
+    float distanciaC;
 
     printf("Insira o tamanho dos vetores: ");
     scanf (" %d", &tamVet);
@@ -41,9 +38,8 @@ int main()
       scanf(" %d", &vet2[i]);
     }
 
-    distanciaE = distEuclideana( vet1, vet2, tamVet );
-
-    printf("Distancia: %.2f\n", distanciaE);
+    distanciaC = distChebychev( vet1, vet2, tamVet);
+    printf ("Distancia: %.2f\n", distanciaC);
 
     return 0;
 }
