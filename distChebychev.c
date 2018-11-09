@@ -19,6 +19,8 @@ float distChebychev( int* vetor1, int* vetor2, int tamanho )
         diferencas[i] = abs(vetor2[i] - vetor1[i]);
         if ( diferencas[i] > distancia ) { distancia = diferencas[i]; }
     }
+    
+    free(diferencas)
 
     return distancia;
 }
