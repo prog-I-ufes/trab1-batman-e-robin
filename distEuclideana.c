@@ -17,7 +17,7 @@ float distEuclideana( int* vetor1, int* vetor2, int tamanho )
     return distancia;
 }
 
-int main()
+int main()  //Apenas para testar a função, sera removido depois
 {
   //Testando apenas as distancias
     int i, tamVet, *vet1, *vet2;

@@ -18,7 +18,7 @@ float distMinkowsky( int* vetor1, int* vetor2, float r, int tamanho )
 }
 
 
-int main()
+int main()  //Apenas para testar a função, sera removido depois
 {
     int i, tamVet, *vet1, *vet2;
     float r, distanciaM;
