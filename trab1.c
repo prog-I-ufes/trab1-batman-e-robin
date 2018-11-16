@@ -11,11 +11,29 @@ char* stringAlloc( int tam )
     return string;
 }
 
-void openConfig( FILE *configTxt, char *pathTreino, char *pathTeste, char *pathSaida  )
+int fileLines( FILE *arq, char *nome )
+{
+    int linhas = 0;
+    char caractere;
+
+    arq = fopen(nome, "r");
+    if ( arq == NULL ) { printf("Arquivo nao encontrado. Encerrando programa..."); exit(1); }
+
+    while( !feof(arq) )
+    {
+        caractere = fgetc(arq);
+        if ( caractere == '\n' ) { linhas++; }
+    }
+
+    fclose(arq);
+    return linhas;
+}
+
+void readConfig( FILE *configTxt, char *pathTreino, char *pathTeste, char *pathSaida, int *k, char *tDist, float *r )
 {
     // Função que le o arquivo txt e armazena todas as informaçoes em ponteiros
-    int tamLinha, i;
-    char aux[100];
+    int tamLinha, i, linhas, contador, posicao;
+    char caractere;
 
     configTxt = fopen("config.txt", "r");
     if ( configTxt == NULL ) 
@@ -28,7 +46,7 @@ void openConfig( FILE *configTxt, char *pathTreino, char *pathTeste, char *pathS
     pathTreino = stringAlloc(100);
     fgets(pathTreino, 99, configTxt);
     tamLinha = strlen(pathTreino);
-    pathTreino = realloc ( pathTreino, (tamLinha + 1) * sizeof(char) );
+    pathTreino = realloc ( pathTreino, (tamLinha + 1) * sizeof(char) ); //"+1" por causa do /0
 
     pathTeste = stringAlloc(100);
     fgets(pathTeste, 99, configTxt);
@@ -40,24 +58,67 @@ void openConfig( FILE *configTxt, char *pathTreino, char *pathTeste, char *pathS
     tamLinha = strlen(pathSaida);
     pathSaida = realloc ( pathSaida, (tamLinha + 1) * sizeof(char) );
 
+    linhas = fileLines( configTxt, "config.txt" );
+
+    k = (int *) malloc( (linhas - 3) * sizeof(int) );
+    tDist = (char *) malloc( (linhas - 3) * sizeof(char) );
+    r = (float *) malloc( (linhas - 3) * sizeof(float) );
+
+    contador = 1;
+    posicao = 0;
+
+    while( !feof(configTxt) ) //Lendo os parametros de K, distancia e r. (gambiarra?)
+    {
+        switch(contador)
+        {
+            case 1: fscanf(configTxt, "%d", &k[posicao]);
+                    contador++; 
+                    break;
+
+            case 4: fscanf(configTxt, "%c", &tDist[posicao]);
+                    if ( tDist[posicao] != 'M' ) { r[posicao] = 0;}
+                    contador++;
+                    break;
+
+            case 7: fscanf(configTxt, "%f", &r[posicao]);
+                    contador++;
+                    break;
+
+            default: caractere = fgetc(configTxt);
+                     if( caractere == '\n') { contador = 1; posicao++; }
+                     else { contador++; }
+                     break;
+        }
+    }
+
+    printf("%s", pathTreino);
+    printf("%s", pathTeste);
+    printf("%s", pathSaida);
+
+    for(i = 0 ; i < linhas - 3 ; i++ )
+    {
+        printf("%d, %c, %.1f\n", k[i], tDist[i], r[i]);
+    }
+
     fclose(configTxt);
 }
 
-void closeAllocs()
-{
-
-}
 
 int main()
-{
-    char *pathTreino, *pathTeste, *pathSaida;
+{   
+    int *k;
+    float *r;
+    char *pathTreino, *pathTeste, *pathSaida, *tDist;
     FILE *configTxt;
 
-    openConfig( configTxt, pathTreino, pathTeste, pathSaida );
+    readConfig( configTxt, pathTreino, pathTeste, pathSaida, k, tDist, r );
 
     free(pathTreino);
     free(pathTeste);
     free(pathSaida);
+    free(k);
+    free(tDist);
+    free(r);
 
     return 0;
 }
