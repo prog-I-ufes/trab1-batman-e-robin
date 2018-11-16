@@ -91,15 +91,6 @@ void readConfig( FILE *configTxt, char *pathTreino, char *pathTeste, char *pathS
         }
     }
 
-    printf("%s", pathTreino);
-    printf("%s", pathTeste);
-    printf("%s", pathSaida);
-
-    for(i = 0 ; i < linhas - 3 ; i++ )
-    {
-        printf("%d, %c, %.1f\n", k[i], tDist[i], r[i]);
-    }
-
     fclose(configTxt);
 }
 
