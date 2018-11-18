@@ -4,8 +4,8 @@
 
 /*
 Lista de erros (Orientação do codigo):
-RR - readPath Null || FL - fileLines Null || LF - loadFeatures Null ||  FF - fileFeatures NULL
-                     ||                     ||                    || 
+RR - readPath Null   || FL - fileLines Null || LF - loadFeatures Null ||  FF - fileFeatures NULL
+RP - readParam Null  ||                     ||                    || 
                      ||                     ||                    || 
                      ||                     ||                    ||                                           
 */
@@ -99,33 +99,92 @@ float** loadFeatures( char *pathArq, int *linhas, int *features )   //Função A
     return mat;
 }
 
-char* readPath( int linha )
+void readPath( char **pTreino, char **pTeste, char **pSaida )
 {   
-    int contador = 0, tamanho;
+    int contador = 1, tamanho;
     char *stringPath, strAux[100];
     FILE *config;
 
     config = fopen("config.txt", "r");
     if( config == NULL ) { printf("Erro ao abrir arquivo(RP). Encerrando programa..."); exit(1); }
     
-    while( contador != linha )
+    do
     {
         fgets(strAux, 99, config);
+        tamanho = strlen(strAux);
+        strAux[tamanho-1] = '\0';
+        
+        switch(contador)
+        {
+            case 1: *pTreino = stringAlloc(tamanho);
+                    strcpy(*pTreino, strAux);
+                    break;
+
+            case 2: *pTeste = stringAlloc(tamanho);
+                    strcpy(*pTeste, strAux);
+                    break;
+
+            case 3: *pSaida = stringAlloc(tamanho);
+                    strcpy(*pSaida, strAux);
+                    break;
+        }
+
         contador++;
-    }
-    
-    tamanho = strlen(strAux);
-    strAux[tamanho-1] = '\0';
-    stringPath = stringAlloc( tamanho );
-    strcpy( stringPath, strAux );
+    } while( contador < 4);
 
     fclose(config);
-    return stringPath;
 }
 
-void readParam( int *k, char *tDist, float *r )
+void readParam( int **k, char **tDist, float **r )// pq **??
 {
+    int linhas, contador = 0, posicao = 0, bn = 0, i;
+    char caractere;
+    FILE *config;
 
+    config = fopen("config.txt", "r");
+    if ( config == NULL ) { printf("Erro ao abrir arquivo(RP). Encerrando programa...\n"); exit(1); }
+    linhas = fileLines( config, "config.txt");
+
+    *k = (int *) malloc( (linhas - 3) * sizeof(int));
+    *tDist = (char *) malloc( (linhas - 3) * sizeof(char));
+    *r = (float *) malloc( (linhas - 3) * sizeof(float));
+
+
+    while( !feof(config) )
+    {
+        switch(contador)
+        {
+            case 0: do
+                    {   
+                        caractere = fgetc(config);
+                        if ( caractere == '\n' ) { bn++; }
+                    } while(bn < 3);
+                    contador = 1;
+                    break;
+                    
+            case 1: fscanf(config, "%d", &((*k)[posicao]));
+                    contador++;
+                    break;
+            
+            case 4: fscanf(config, "%c", &((*tDist)[posicao]));
+                    if ( (*tDist)[posicao] != 'M' ) { (*r)[posicao] = 0; }
+                    contador++;
+                    break;
+            
+            case 7: fscanf(config, "%f", &((*r)[posicao]));
+                    contador++;
+                    break;
+
+            default: caractere = fgetc(config);
+                     if ( caractere == '\n' ) { contador = 1; posicao++; }
+                     else { contador++; }
+
+                     break;
+        }
+    }
+    
+    
+    fclose(config);
 }
 
 int main()
@@ -136,10 +195,8 @@ int main()
     FILE *configTxt;
 
     printf("Obtendo parametros de configuracao -> ");
-    pathTreino = readPath(1);
-    pathTeste = readPath(2);
-    pathSaida = readPath(3);
-
+    readPath( &pathTreino, &pathTeste, &pathSaida );
+    readParam( &k, &tDist, &r );
     printf("OK\n");
 
     printf("Obtendo parametros de treino -> ");
@@ -149,9 +206,11 @@ int main()
     printf("OK\n");
 
     
-    
-    
-    
+
+
+    free(k);
+    free(tDist);
+    free(r);
     free(pathTreino);
     free(pathTeste);
     free(pathSaida);
