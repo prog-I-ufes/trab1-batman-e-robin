@@ -136,19 +136,19 @@ float** initMatF( int m, int n )    //Função vetor/matriz
 }
 
 float** readPath( char *pathArq, int *linhas, int *features )   //Função Arquivo
-{
+{   
     int i, j;
     float **mat;
     char aux = 'a';
     FILE *arquivo;
 
-    arquivo = fopen(pathArq, "r");
+    arquivo = fopen( pathArq, "r");
     if ( arquivo == NULL ) { printf("Erro ao abrir arquivo(RP). Encerrando programa..."); exit(1); }
 
     *linhas = fileLines( arquivo, pathArq );
     *features = fileFeatures( arquivo, pathArq, 1 );
     mat = initMatF( *linhas, *features );
-
+    
     for ( i = 0 ; i < *linhas ; i++ )
     {
         for ( j = 0 ; j <= *features ; j++)
@@ -157,16 +157,16 @@ float** readPath( char *pathArq, int *linhas, int *features )   //Função Arqui
             aux = fgetc(arquivo);
         }
     }
-
+    
     fclose(arquivo);
-
+    
     return mat;
 }
 
 int main()
 {   
-    int i, j, *k, linhasTreino, featuresTreino;
-    float *r, **matTreino;
+    int i, j, *k, linhasTreino, featuresTreino, linhasTeste, featuresTeste;
+    float *r, **matTreino, **matTeste;
     char *pathTreino, *pathTeste, *pathSaida, *tDist;
     FILE *configTxt;
 
@@ -180,22 +180,30 @@ int main()
     printf("Obtendo parametros de configuracao -> ");
     readConfig( configTxt, pathTreino, pathTeste, pathSaida, k, tDist, r );
     printf("OK\n");
-
-    /*printf("=====Main========\n"); //Rm
-    printf("%d %c %.1f\n", k[0], tDist[0], r[0]); //<<<<<<<<Nao ta printando o valor obtido na função
-    printf("=====Main========\n"); //Rm
-    printf("%s\n", pathTreino);    //Rm*/
+    printf("%s\n", pathTreino);
+    printf("%s\n", pathTeste);
 
     printf("Obtendo parametros de treino -> ");
     matTreino = readPath( pathTreino, &linhasTreino, &featuresTreino ); 
     printf("OK\n");
+    printf("%f\n", matTreino[0][4]);
+
+    //printf("Obtendo parametros de teste -> ");
+    //matTeste = readPath ( pathTeste, &linhasTeste, &featuresTeste );
+    //printf("OK\n");
 
     
-    for ( i = 0 ; i < linhasTreino -1 ; i++ )
+    
+    /*for ( i = 0 ; i < linhasTeste -1 ; i++ )
+    {
+        free(matTeste[i]);
+    }*/
+    /*for ( i = 0 ; i < linhasTreino -1 ; i++ )
     {
         free(matTreino[i]);
-    }
-    free(matTreino);
+    }*/
+    //free(matTeste);
+    //free(matTreino);
     free(pathTreino);
     free(pathTeste);
     free(pathSaida);
@@ -205,3 +213,8 @@ int main()
 
     return 0;
 }
+
+/*printf("=====Main========\n"); //Rm
+    printf("%d %c %.1f\n", k[0], tDist[0], r[0]); //<<<<<<<<Nao ta printando o valor obtido na função
+    printf("=====Main========\n"); //Rm
+    printf("%s\n", pathTreino);    //Rm*/
