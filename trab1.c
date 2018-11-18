@@ -17,10 +17,11 @@ char* stringAlloc( int tam ) //Função vetor/matriz
     return string;
 }
 
-int fileFeatures( FILE *arq, char *nome, int linha ) //Calcula a quantidade de features da linha informada //Função Arquivo
+int fileFeatures( char *nome, int linha ) //Calcula a quantidade de features da linha informada //Função Arquivo
 {
     int features = 0, linhaAtual = 1;
     char caractere;
+    FILE *arq;
 
     arq = fopen(nome, "r");
     if ( arq == NULL ) { printf("Erro ao abrir arquivo(FF). Encerrando programa..."); exit(1); }
@@ -35,13 +36,15 @@ int fileFeatures( FILE *arq, char *nome, int linha ) //Calcula a quantidade de f
         else if ( caractere == '\n' ) { linhaAtual++; }
     }
 
+    fclose(arq);
     return 0;
 }
 
-int fileLines( FILE *arq, char *nome )  //Função Arquivo
+int fileLines( char *nome )  //Função Arquivo
 {
     int linhas = 0;
     char caractere;
+    FILE *arq;
 
     arq = fopen(nome, "r");
     if ( arq == NULL ) { printf("Erro ao abrir arquivo(FL). Encerrando programa..."); exit(1); }
@@ -66,7 +69,7 @@ float** initMatF( int m, int n )    //Função vetor/matriz
     {
         matriz[i] = (float *) malloc( n * sizeof(float) );
     }
-
+    
     return matriz;
 }
 
@@ -78,22 +81,21 @@ float** loadFeatures( char *pathArq, int *linhas, int *features )   //Função A
     FILE *arquivo;
 
     arquivo = fopen( pathArq, "r");
-    printf(">%s<\n", pathArq);
     if ( arquivo == NULL ) { printf("Erro ao abrir arquivo(LF). Encerrando programa..."); exit(1); }
 
-    *linhas = fileLines( arquivo, pathArq );
-    *features = fileFeatures( arquivo, pathArq, 1 );
-    mat = initMatF( *linhas, *features );
+    *linhas = fileLines( pathArq );
+    *features = fileFeatures( pathArq, *linhas );
     
-    for ( i = 0 ; i < *linhas ; i++ )
+    mat = initMatF( *linhas, *features );
+    for( i = 0 ; i < *linhas ; i++ )
     {
-        for ( j = 0 ; j <= *features ; j++)
-        {   
+        for( j = 0 ; j < *features ; j++ )
+        {
             fscanf(arquivo, "%f", &mat[i][j]);
             aux = fgetc(arquivo);
         }
     }
-    
+
     fclose(arquivo);
     
     return mat;
@@ -143,7 +145,7 @@ void readParam( int **k, char **tDist, float **r )// pq **??
 
     config = fopen("config.txt", "r");
     if ( config == NULL ) { printf("Erro ao abrir arquivo(RP). Encerrando programa...\n"); exit(1); }
-    linhas = fileLines( config, "config.txt");
+    linhas = fileLines( "config.txt");
 
     *k = (int *) malloc( (linhas - 3) * sizeof(int));
     *tDist = (char *) malloc( (linhas - 3) * sizeof(char));
@@ -200,20 +202,31 @@ int main()
     printf("OK\n");
 
     printf("Obtendo parametros de treino -> ");
+    matTreino = loadFeatures( pathTreino, &linhasTreino, &featuresTreino );
     printf("OK\n");
     
     printf("Obtendo parametros de teste -> ");
+    matTeste = loadFeatures( pathTeste, &linhasTeste, &featuresTeste );
     printf("OK\n");
 
-    
 
 
+    for( i = 0 ; i < linhasTreino ; i++ )
+    {   
+        free(matTreino[i]);
+    }
+    for( i = 0 ; i < linhasTeste ; i++ )
+    {   
+        free(matTeste[i]);
+    }
+    free(matTeste);
+    free(matTreino);
     free(k);
     free(tDist);
     free(r);
     free(pathTreino);
     free(pathTeste);
     free(pathSaida);
-
+    
     return 0;
 }
