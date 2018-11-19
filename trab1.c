@@ -31,7 +31,7 @@ int fileFeatures( char *nome, int linha ) //Calcula a quantidade de features da 
         caractere = fgetc(arq);
         if ( linhaAtual == linha ) { 
                                         if ( caractere == ',' ) { features++; } 
-                                        else if ( caractere == '\n' ) { return features; }
+                                        else if ( caractere == '\n' ) { fclose(arq); return features; }
                                    }
         else if ( caractere == '\n' ) { linhaAtual++; }
     }
@@ -95,7 +95,7 @@ float** loadFeatures( char *pathArq, int *linhas, int *features )   //Função A
             aux = fgetc(arquivo);
         }
     }
-
+    
     fclose(arquivo);
     
     return mat;
