@@ -18,7 +18,7 @@ int fileFeatures( char *nome, int linha );
 int fileLines( char *nome );
 float** loadFeatures( char *pathArq, int *linhas, int *features );
 void readPath( char **pTreino, char **pTeste, char **pSaida );
-void readParam( int **k, char **tDist, float **r );
+void readParam( int **k, char **tDist, float **r , int *execucoes );
 char* stringAlloc( int tam );
 float** initMatF( int m, int n );
 float distEuclideana( int* vetor1, int* vetor2, int tamanho );
@@ -134,7 +134,7 @@ void readPath( char **pTreino, char **pTeste, char **pSaida )
     fclose(config);
 }
 
-void readParam( int **k, char **tDist, float **r )// pq **??
+void readParam( int **k, char **tDist, float **r , int *execucoes )// pq **??
 {
     int linhas, contador = 0, posicao = 0, bn = 0, i;
     char caractere;
@@ -143,6 +143,7 @@ void readParam( int **k, char **tDist, float **r )// pq **??
     config = fopen("config.txt", "r");
     if ( config == NULL ) { printf("Erro ao abrir arquivo(RP). Encerrando programa...\n"); exit(1); }
     linhas = fileLines( "config.txt");
+    *execucoes = linhas - 3;
 
     *k = (int *) malloc( (linhas - 3) * sizeof(int));
     *tDist = (char *) malloc( (linhas - 3) * sizeof(char));
@@ -274,14 +275,14 @@ float distChebychev( int* vetor1, int* vetor2, int tamanho )
 
 int main()
 {   
-    int i, j, *k, linhasTreino, featuresTreino, linhasTeste, featuresTeste;
+    int i, j, *k, execucoes, linhasTreino, featuresTreino, linhasTeste, featuresTeste;
     float *r, **matTreino, **matTeste;
     char *pathTreino, *pathTeste, *pathSaida, *tDist;
     FILE *configTxt;
 
     printf("Obtendo parametros de configuracao -> ");
     readPath( &pathTreino, &pathTeste, &pathSaida );
-    readParam( &k, &tDist, &r );
+    readParam( &k, &tDist, &r, &execucoes );
     printf("OK\n");
 
     printf("Obtendo parametros de treino -> ");
