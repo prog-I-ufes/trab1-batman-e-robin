@@ -30,21 +30,21 @@ float distChebychev( float* vetor1, float* vetor2, int tamanho );
 //====================[Funçoes de Arquivo]============================================================================
 int fileFeatures( char *nome, int linha ) //Calcula a quantidade de features da linha informada 
 {
-    int features = 0, linhaAtual = 1;
+    int features = 1, linhaTesteAtual = 1;
     char caractere;
     FILE *arq;
 
     arq = fopen(nome, "r");
-    if ( arq == NULL ) { printf("Erro ao abrir arquivo(FF). Encerrando programa...\n"); exit(1); }
+    if ( arq == NULL ) { printf("Erro  ao abrir arquivo(FF). Encerrando programa...\n"); exit(1); }
 
     while( !feof(arq) )
     {
         caractere = fgetc(arq);
-        if ( linhaAtual == linha ) { 
+        if ( linhaTesteAtual == linha ) { 
                                         if ( caractere == ',' ) { features++; } 
                                         else if ( caractere == '\n' ) { fclose(arq); return features; }
                                    }
-        else if ( caractere == '\n' ) { linhaAtual++; }
+        else if ( caractere == '\n' ) { linhaTesteAtual++; }
     }
 
     fclose(arq);
@@ -83,16 +83,14 @@ float** loadFeatures( char *pathArq, int *linhas, int *features )
     *linhas = fileLines( pathArq );
     *features = fileFeatures( pathArq, *linhas );
     
-    mat = initMatF( *linhas, *features + 1 );
+    mat = initMatF( *linhas, *features );
     for( i = 0 ; i < *linhas ; i++ )
     {
-        for( j = 0 ; j <= *features ; j++ )
+        for( j = 0 ; j < *features ; j++ )
         {
             fscanf(arquivo, "%f", &mat[i][j]);
             aux = fgetc(arquivo);
-            printf("%f ", mat[i][j]);
         }
-        printf("\n");
     }
     
     fclose(arquivo);
@@ -289,40 +287,81 @@ float dist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist )
     return resultado;
 }
 //====================[Funções de Distancia]============================================================================
+void bubbleSort( float **result, float **rot, int tam)
+{
+    int i, j;
+    float auxResult, auxRot;
+
+    for ( j = tam ; j > 0 ; j-- )
+    {
+        for( i = 0 ; i < j ; i++ )
+        {
+            if ( (*result)[i] > (*result)[i+1] )
+            {
+                auxResult = (*result)[i];
+                auxRot = (*rot)[i];
+                (*result)[i] = (*result)[i+1];
+                (*rot)[i] = (*rot)[i+1];
+                (*result)[i+1] = auxResult;
+                (*rot)[i+1] = auxRot;
+            }
+        }
+    }
+}
+
+float defRot( int k , float *rotulos )
+{
+    return rotulos[1];
+}
 
 
 
 int main()
 {   
-    int i, z, j, contador, *k, exeTot, exeAtual = 0, linhasTreino, featuresTreino, linhasTeste, featuresTeste;
-    float *r, **matTreino, **matTeste, *resultados, *rotulos;
+    int i, z, j, contador, *k, exeTot, exeAtual = 0, linhaTesteAtual, linhaTreinoAtual, linhasTreino, featuresTreino, linhasTeste, featuresTeste;
+    float *r, **matTreino, **matTeste, *resultados, *rotulos, *rotulosAvaliados, precisao;
     char *pathTreino, *pathTeste, *pathSaida, *tDist;
     FILE *configTxt;
 
-    printf("Obtendo parametros de configuracao -> ");
+    printf(" >Obtendo parametros de configuracao -> ");
     readPath( &pathTreino, &pathTeste, &pathSaida );
     readParam( &k, &tDist, &r, &exeTot );
     printf("OK\n");
-
-    printf("Obtendo parametros de treino -> ");
+    
+    printf(" >Obtendo parametros de treino -> ");
     matTreino = loadFeatures( pathTreino, &linhasTreino, &featuresTreino );
     printf("OK\n");
     
-    printf("Obtendo parametros de teste -> ");
+    printf(" >Obtendo parametros de teste -> ");
     matTeste = loadFeatures( pathTeste, &linhasTeste, &featuresTeste );
     printf("OK\n");
 
-    
-    //resultados = (float *) malloc( linhasTreino * sizeof(float));
-    //rotulos = (float *) malloc( linhasTreino * sizeof(float));
-  
-       /* for ( i = 0 ; i < linhasTreino ; i++ )
+    printf("Calculando...\n");
+
+    resultados = (float *) malloc( linhasTreino * sizeof(float));
+    rotulos = (float *) malloc( linhasTreino * sizeof(float));
+    rotulosAvaliados = (float *) malloc( linhasTeste * sizeof(float));
+
+    while( exeAtual < exeTot )
+    {   
+        for ( linhaTesteAtual = 0 ; linhaTesteAtual < linhasTeste ; linhaTesteAtual++ )
         {
-            resultados[i] = dist( matTreino[i], matTeste[0], (featuresTreino - 1), r[0], tDist[0] );
-            
-            printf("%f\n", resultados[i]);
-            printf("%f\n", matTreino[0][4]);
-        }*/
+            for ( linhaTreinoAtual = 0 ; linhaTreinoAtual < linhasTreino ; linhaTreinoAtual++ )
+            {
+                resultados[linhaTreinoAtual] = dist( matTreino[linhaTreinoAtual], matTeste[linhaTesteAtual], (featuresTreino - 1), r[exeAtual], tDist[exeAtual] );
+                rotulos[linhaTreinoAtual] = matTreino[linhaTreinoAtual][featuresTreino-1]; 
+            }
+
+            bubbleSort( &resultados, &rotulos, linhasTreino - 1 );
+            rotulosAvaliados[linhaTesteAtual] = defRot( k[exeAtual], rotulos ); //Resposta de todos os rotulos  do treino classificados
+        }
+
+        exeAtual++;
+    }
+
+    printf("Finalizado!\n");
+      
+
 
 
 
@@ -335,8 +374,9 @@ int main()
     {   
         free(matTeste[i]);
     }
-    //free(rotulos);
-    //free(resultados);
+    free(rotulosAvaliados);
+    free(rotulos);
+    free(resultados);
     free(matTeste);
     free(matTreino);
     free(k);
