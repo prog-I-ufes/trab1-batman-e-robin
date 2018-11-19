@@ -21,9 +21,9 @@ void readPath( char **pTreino, char **pTeste, char **pSaida );
 void readParam( int **k, char **tDist, float **r , int *execucoes );
 char* stringAlloc( int tam );
 float** initMatF( int m, int n );
-float distEuclideana( int* vetor1, int* vetor2, int tamanho );
-float distMinkowsky( int* vetor1, int* vetor2, float r, int tamanho );
-float distChebychev( int* vetor1, int* vetor2, int tamanho );
+float distEuclideana( float* vetor1, float* vetor2, int tamanho );
+float distMinkowsky( float* vetor1, float* vetor2, float r, int tamanho );
+float distChebychev( float* vetor1, float* vetor2, int tamanho );
 //====================[Cabeçalho das Funções]======================================================================
 
 
@@ -83,14 +83,16 @@ float** loadFeatures( char *pathArq, int *linhas, int *features )
     *linhas = fileLines( pathArq );
     *features = fileFeatures( pathArq, *linhas );
     
-    mat = initMatF( *linhas, *features );
+    mat = initMatF( *linhas, *features + 1 );
     for( i = 0 ; i < *linhas ; i++ )
     {
-        for( j = 0 ; j < *features ; j++ )
+        for( j = 0 ; j <= *features ; j++ )
         {
             fscanf(arquivo, "%f", &mat[i][j]);
             aux = fgetc(arquivo);
+            printf("%f ", mat[i][j]);
         }
+        printf("\n");
     }
     
     fclose(arquivo);
@@ -218,7 +220,7 @@ float** initMatF( int m, int n )
 
 
 //====================[Funções de Distancia]============================================================================
-float distEuclideana( int* vetor1, int* vetor2, int tamanho )
+float distEuclideana( float* vetor1, float* vetor2, int tamanho )
 {
     int i;
     float distancia, somatorio = 0;
@@ -232,7 +234,7 @@ float distEuclideana( int* vetor1, int* vetor2, int tamanho )
     return distancia;
 }
 
-float distMinkowsky( int* vetor1, int* vetor2, float r, int tamanho )
+float distMinkowsky( float* vetor1, float* vetor2, float r, int tamanho )
 {
     int i;
     float distancia, somatorio = 0;
@@ -247,7 +249,7 @@ float distMinkowsky( int* vetor1, int* vetor2, float r, int tamanho )
     return distancia;
 }
 
-float distChebychev( int* vetor1, int* vetor2, int tamanho )
+float distChebychev( float* vetor1, float* vetor2, int tamanho )
 {
     int i;
     float distancia = 0, somatorio = 0, *diferencas;
@@ -269,20 +271,37 @@ float distChebychev( int* vetor1, int* vetor2, int tamanho )
 
     return distancia;
 }
+
+float dist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist )
+{
+    float resultado;
+
+    switch( tipoDist )
+    {
+        case 'E': resultado = distEuclideana( vetor1, vetor2, tamanho );
+                  break;
+        case 'M': resultado = distMinkowsky( vetor1, vetor2, r, tamanho );
+                  break;
+        case 'C': resultado = distChebychev( vetor1, vetor2, tamanho);
+                  break;
+    }
+    
+    return resultado;
+}
 //====================[Funções de Distancia]============================================================================
 
 
 
 int main()
 {   
-    int i, j, *k, execucoes, linhasTreino, featuresTreino, linhasTeste, featuresTeste;
-    float *r, **matTreino, **matTeste;
+    int i, z, j, contador, *k, exeTot, exeAtual = 0, linhasTreino, featuresTreino, linhasTeste, featuresTeste;
+    float *r, **matTreino, **matTeste, *resultados, *rotulos;
     char *pathTreino, *pathTeste, *pathSaida, *tDist;
     FILE *configTxt;
 
     printf("Obtendo parametros de configuracao -> ");
     readPath( &pathTreino, &pathTeste, &pathSaida );
-    readParam( &k, &tDist, &r, &execucoes );
+    readParam( &k, &tDist, &r, &exeTot );
     printf("OK\n");
 
     printf("Obtendo parametros de treino -> ");
@@ -293,8 +312,21 @@ int main()
     matTeste = loadFeatures( pathTeste, &linhasTeste, &featuresTeste );
     printf("OK\n");
 
+    
+    //resultados = (float *) malloc( linhasTreino * sizeof(float));
+    //rotulos = (float *) malloc( linhasTreino * sizeof(float));
+  
+       /* for ( i = 0 ; i < linhasTreino ; i++ )
+        {
+            resultados[i] = dist( matTreino[i], matTeste[0], (featuresTreino - 1), r[0], tDist[0] );
+            
+            printf("%f\n", resultados[i]);
+            printf("%f\n", matTreino[0][4]);
+        }*/
 
 
+
+    
     for( i = 0 ; i < linhasTreino ; i++ )
     {   
         free(matTreino[i]);
@@ -303,6 +335,8 @@ int main()
     {   
         free(matTeste[i]);
     }
+    //free(rotulos);
+    //free(resultados);
     free(matTeste);
     free(matTreino);
     free(k);
