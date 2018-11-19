@@ -3,28 +3,35 @@
 #include <string.h>
 
 /*
-Lista de erros (Orientação do codigo):
+Código de erros
+Informa em qual função o erro ocorreu e o tipo do erro
+
 RR - readPath Null   || FL - fileLines Null || LF - loadFeatures Null ||  FF - fileFeatures NULL
-RP - readParam Null  ||                     ||                    || 
-                     ||                     ||                    || 
-                     ||                     ||                    ||                                           
+RP - readParam Null  ||                     ||                        || 
+                     ||                     ||                        || 
+                     ||                     ||                        ||                                           
 */
-char* stringAlloc( int tam ) //Função vetor/matriz
-{
-    char *string;
 
-    string = (char *) malloc( tam * sizeof(char) );
-    return string;
-}
+//====================[Cabeçalho das Funções]======================================================================
+int fileFeatures( char *nome, int linha );
+int fileLines( char *nome );
+float** loadFeatures( char *pathArq, int *linhas, int *features );
+void readPath( char **pTreino, char **pTeste, char **pSaida );
+void readParam( int **k, char **tDist, float **r );
+char* stringAlloc( int tam );
+float** initMatF( int m, int n );
+//====================[Cabeçalho das Funções]======================================================================
 
-int fileFeatures( char *nome, int linha ) //Calcula a quantidade de features da linha informada //Função Arquivo
+
+//====================[Funçoes de Arquivo]============================================================================
+int fileFeatures( char *nome, int linha ) //Calcula a quantidade de features da linha informada 
 {
     int features = 0, linhaAtual = 1;
     char caractere;
     FILE *arq;
 
     arq = fopen(nome, "r");
-    if ( arq == NULL ) { printf("Erro ao abrir arquivo(FF). Encerrando programa..."); exit(1); }
+    if ( arq == NULL ) { printf("Erro ao abrir arquivo(FF). Encerrando programa...\n"); exit(1); }
 
     while( !feof(arq) )
     {
@@ -40,14 +47,14 @@ int fileFeatures( char *nome, int linha ) //Calcula a quantidade de features da 
     return 0;
 }
 
-int fileLines( char *nome )  //Função Arquivo
+int fileLines( char *nome ) 
 {
     int linhas = 0;
     char caractere;
     FILE *arq;
 
     arq = fopen(nome, "r");
-    if ( arq == NULL ) { printf("Erro ao abrir arquivo(FL). Encerrando programa..."); exit(1); }
+    if ( arq == NULL ) { printf("Erro ao abrir arquivo(FL). Encerrando programa...\n"); exit(1); }
 
     while( !feof(arq) )
     {
@@ -59,21 +66,7 @@ int fileLines( char *nome )  //Função Arquivo
     return linhas;
 }
 
-float** initMatF( int m, int n )    //Função vetor/matriz
-{
-    int i;
-    float **matriz;
-
-    matriz = (float **) malloc( m * sizeof(float *) );
-    for ( i = 0; i < m ; i++ )
-    {
-        matriz[i] = (float *) malloc( n * sizeof(float) );
-    }
-    
-    return matriz;
-}
-
-float** loadFeatures( char *pathArq, int *linhas, int *features )   //Função Arquivo
+float** loadFeatures( char *pathArq, int *linhas, int *features )
 {   
     int i, j;
     float **mat;
@@ -81,7 +74,7 @@ float** loadFeatures( char *pathArq, int *linhas, int *features )   //Função A
     FILE *arquivo;
 
     arquivo = fopen( pathArq, "r");
-    if ( arquivo == NULL ) { printf("Erro ao abrir arquivo(LF). Encerrando programa..."); exit(1); }
+    if ( arquivo == NULL ) { printf("Erro ao abrir arquivo(LF). Encerrando programa...\n"); exit(1); }
 
     *linhas = fileLines( pathArq );
     *features = fileFeatures( pathArq, *linhas );
@@ -108,7 +101,7 @@ void readPath( char **pTreino, char **pTeste, char **pSaida )
     FILE *config;
 
     config = fopen("config.txt", "r");
-    if( config == NULL ) { printf("Erro ao abrir arquivo(RP). Encerrando programa..."); exit(1); }
+    if( config == NULL ) { printf("Erro ao abrir arquivo(RP). Encerrando programa...\n"); exit(1); }
     
     do
     {
@@ -188,6 +181,36 @@ void readParam( int **k, char **tDist, float **r )// pq **??
     
     fclose(config);
 }
+//====================[Funçoes de Arquivo]==============================================================================
+
+
+//====================[Funçoes de Vetor/Matriz]=========================================================================
+char* stringAlloc( int tam )
+{
+    char *string;
+
+    string = (char *) malloc( tam * sizeof(char) );
+    return string;
+}
+
+
+
+float** initMatF( int m, int n )
+{
+    int i;
+    float **matriz;
+
+    matriz = (float **) malloc( m * sizeof(float *) );
+    for ( i = 0; i < m ; i++ )
+    {
+        matriz[i] = (float *) malloc( n * sizeof(float) );
+    }
+    
+    return matriz;
+}
+
+//====================[Funçoes de Vetor/Matriz]=========================================================================
+
 
 int main()
 {   
