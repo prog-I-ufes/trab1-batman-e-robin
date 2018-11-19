@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 /*
 Código de erros
@@ -20,6 +21,9 @@ void readPath( char **pTreino, char **pTeste, char **pSaida );
 void readParam( int **k, char **tDist, float **r );
 char* stringAlloc( int tam );
 float** initMatF( int m, int n );
+float distEuclideana( int* vetor1, int* vetor2, int tamanho );
+float distMinkowsky( int* vetor1, int* vetor2, float r, int tamanho );
+float distChebychev( int* vetor1, int* vetor2, int tamanho );
 //====================[Cabeçalho das Funções]======================================================================
 
 
@@ -210,6 +214,62 @@ float** initMatF( int m, int n )
 }
 
 //====================[Funçoes de Vetor/Matriz]=========================================================================
+
+
+//====================[Funções de Distancia]============================================================================
+float distEuclideana( int* vetor1, int* vetor2, int tamanho )
+{
+    int i;
+    float distancia, somatorio = 0;
+
+    for ( i = 0 ; i < tamanho ; i++ )
+    {
+      somatorio = somatorio + pow ( (vetor2[i] - vetor1[i]), 2) ;
+    }
+    distancia = sqrt (somatorio);
+
+    return distancia;
+}
+
+float distMinkowsky( int* vetor1, int* vetor2, float r, int tamanho )
+{
+    int i;
+    float distancia, somatorio = 0;
+
+    for ( i = 0 ; i < tamanho ; i++ )
+    {
+        somatorio = somatorio + pow ( ( abs( vetor1[i] - vetor2[i] ) ), r );
+    }
+
+    distancia = pow ( somatorio, 1/r );
+
+    return distancia;
+}
+
+float distChebychev( int* vetor1, int* vetor2, int tamanho )
+{
+    int i;
+    float distancia = 0, somatorio = 0, *diferencas;
+
+    diferencas = (float *) malloc( tamanho * sizeof(float));  
+    /*
+    Vetor auxiliar que armazenará todas as diferencas entre os pontos dos vetores
+    Ex: distancia entre (x1,y1) e (x2,y2)
+        diferenca[0] = x1 - x2
+        diferenca[1] = y1 - y2
+    */
+    for ( i = 0 ; i < tamanho ; i++ )
+    {
+        diferencas[i] = abs(vetor2[i] - vetor1[i]);
+        if ( diferencas[i] > distancia ) { distancia = diferencas[i]; }
+    }
+    
+    free(diferencas);
+
+    return distancia;
+}
+//====================[Funções de Distancia]============================================================================
+
 
 
 int main()
