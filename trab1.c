@@ -309,9 +309,24 @@ void bubbleSort( float **result, float **rot, int tam)
     }
 }
 
-float defRot( int k , float *rotulos )
+float defLabel( int k , float *rotulos )
 {
-    return rotulos[1];
+    int i, j, vezesAparece = 1 , vezesApareceAux = 0;
+    float rotuloAtual = rotulos[0] , rotuloPredominante = rotulos[0] ;
+
+    for ( i = 0 ; i < k ; i++ )
+    {
+        for ( j = 0 ; j  < k ; j++ )
+        {
+            if ( rotulos[i] == rotulos[j] && i != j ) 
+            { 
+                vezesAparece++;
+            }
+        }
+        if ( vezesAparece > vezesApareceAux ) { vezesApareceAux = vezesAparece; rotuloPredominante = rotulos[i]; }
+    }
+
+    return rotuloPredominante;
 }
 
 
@@ -353,8 +368,15 @@ int main()
             }
 
             bubbleSort( &resultados, &rotulos, linhasTreino - 1 );
-            rotulosAvaliados[linhaTesteAtual] = defRot( k[exeAtual], rotulos ); //Resposta de todos os rotulos  do treino classificados
+            for ( z = 0 ; z < k[exeAtual] ; z++ )
+            {
+                printf("Dist: %.2f, Rotulo: %.2f\n", resultados[z], rotulos[z]);
+            }
+            rotulosAvaliados[linhaTesteAtual] = defLabel( k[exeAtual], rotulos ); //Resposta de todos os rotulos  do treino classificados
+            printf("%f\n", rotulosAvaliados[linhaTesteAtual] );
         }
+        printf("=============================\n");
+
 
         exeAtual++;
     }
