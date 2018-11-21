@@ -19,7 +19,8 @@ int fileLines( char *nome );
 float** loadFeatures( char *pathArq, int *linhas, int *features );
 void readPath( char **pTreino, char **pTeste, char **pSaida );
 void readParam( int **k, char **tDist, float **r , int *execucoes );
-void writeFile( int numExe, float *rotulos, int qtdRotulos, char *pathEscrita, float acuracia );
+void writeFile( int numExe, float *rotulos, int qtdRotulos, char *pathEscrita, float acuracia, int **matConfus, int numRotulos );
+int** matrizConfusao( float *rotulosAvaliados, float *rotulosTeste, int numRotulos, int qtdAmostras );
 char* stringAlloc( int tam );
 float** initMatF( int m, int n );
 int sizeInString( int num );
@@ -30,6 +31,7 @@ float distChebychev( float* vetor1, float* vetor2, int tamanho );
 float selecDist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist );
 float KNN( int k , float *rotulos );
 float acuracia( float *rotulos, float **matTeste, int tamTeste, int posRotulo );
+float maiorNum( float *vetor, int tam );
 //====================[Cabeçalho das Funções]======================================================================
 
 
@@ -193,9 +195,9 @@ void readParam( int **k, char **tDist, float **r , int *execucoes )// pq **??
     fclose(config);
 }
 
-void writeFile( int numExe, float *rotulos, int qtdRotulos, char *pathEscrita, float acuracia )
+void writeFile( int numExe, float *rotulos, int qtdRotulos, char *pathEscrita, float acuracia, int **matConfus, int numRotulos )
 {   
-    int i, tamanhoNumero, tamanhoPath;
+    int i, j, tamanhoNumero, tamanhoPath;
     char *caminho;
     FILE *predicao;
 
@@ -206,7 +208,19 @@ void writeFile( int numExe, float *rotulos, int qtdRotulos, char *pathEscrita, f
     sprintf(caminho, "%spredicao_%d.txt", pathEscrita, (numExe + 1) );
 
     predicao = fopen(caminho, "w");
-    fprintf(predicao, "%.2f\n", acuracia);
+
+    fprintf(predicao, "%.2f\n\n", acuracia);
+
+    for ( i = 0 ; i < numRotulos ; i++ )
+    {
+        for ( j = 0 ; j < numRotulos ; j++ )
+        {   
+            if ( j == numRotulos-1 ) { fprintf(predicao, "%d\n", matConfus[i][j]); }
+            else { fprintf(predicao, "%d ", matConfus[i][j]); }
+        }
+    }
+    fprintf(predicao, "\n");
+
     if ( predicao == NULL ) {  printf("Erro ao abrir arquivo(WF). Encerrando programa...\n"); exit(1); }
 
     for( i = 0 ; i < qtdRotulos ; i++ )
@@ -229,7 +243,18 @@ char* stringAlloc( int tam )
     return string;
 }
 
+int** initMatI( int m, int n )
+{
+    int i, **matriz;
 
+    matriz = (int **) malloc( m * sizeof(int *) );
+    for ( i = 0; i < m ; i++ )
+    {
+        matriz[i] = (int *) malloc( n * sizeof(int) );
+    }
+    
+    return matriz;
+}
 
 float** initMatF( int m, int n )
 {
@@ -275,6 +300,20 @@ int sizeInString( int num )
     else if ( num >= -9999 && num <= -1000 || num >= 1000 && num <= 9999 ) { return 4; }
     else if ( num >= -99999 && num <= -10000 || num >= 10000 && num <= 99999 ) { return 5; }
     //Só mede até tamanho 5 msm
+}
+
+float maiorNum( float *vetor, int tam )
+{   
+    int i;
+    float maior;
+
+    for ( i = 0 ; i < tam ; i++ )
+    {
+        if ( i == 0 ) { maior = vetor[i]; }
+        else if ( vetor[i] > maior ) { maior = vetor[i]; }
+    }
+
+    return maior;
 }
 //====================[Funçoes de Vetor/Matriz]=========================================================================
 
@@ -351,6 +390,30 @@ float selecDist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDi
 //====================[Funções de Distancia]============================================================================
 
 //====================[Classificação de Saida]==========================================================================
+int** matrizConfusao( float *rotulosAvaliados, float *rotulosTeste, int numRotulos, int qtdAmostras )
+{
+    int i, j, auxM, auxN, **matrizConfusao;
+
+    matrizConfusao = initMatI( numRotulos, numRotulos );
+
+    for ( i = 0 ; i < numRotulos ; i++ )
+    {
+        for ( j = 0 ; j < numRotulos ; j++ )
+        {
+            matrizConfusao[i][j] = 0;
+        }
+    }
+
+    for ( i = 0 ; i < qtdAmostras ; i++ )
+    {   
+        auxM = rotulosTeste[i] - 1;
+        auxN = rotulosAvaliados[i] - 1;
+        matrizConfusao[auxM][auxN]++;
+    }
+
+    return matrizConfusao;
+}
+
 float KNN( int k , float *rotulos ) //Define o rótulo predominante entre os K primeiros rótulos
 {
     int i, j, vezesAparece = 0 , vezesApareceAux = 0;
@@ -392,10 +455,12 @@ float acuracia( float *rotulos, float **matTeste, int tamTeste, int posRotulo )
 
 
 
+
+
 int main()
 {   
-    int i, j, *k, exeTot, exeAtual = 0, linhaTesteAtual = 0, linhaTreinoAtual = 0, linhasTreino, featuresTreino, linhasTeste, featuresTeste;
-    float *r, **matTreino, **matTeste, *resultados, *rotulos, *rotulosAvaliados, precisao;
+    int i, j, *k, exeTot, exeAtual = 0, linhaTesteAtual = 0, linhaTreinoAtual = 0, linhasTreino, featuresTreino, linhasTeste, featuresTeste, **matConfus;
+    float *r, **matTreino, **matTeste, *resultados, *rotulos, *rotulosAvaliados, *rotulosTeste, precisao, numRotulos;
     char *pathTreino, *pathTeste, *pathSaida, *tDist;
     FILE *predicao;
 
@@ -417,6 +482,7 @@ int main()
     resultados = (float *) malloc( linhasTreino * sizeof(float));
     rotulos = (float *) malloc( linhasTreino * sizeof(float));
     rotulosAvaliados = (float *) malloc( linhasTeste * sizeof(float));
+    rotulosTeste = (float *) malloc( linhasTeste * sizeof(float));
     /*
     - resultados armazena as distancias entre o objeto de teste e cada um dos objetos do treino, e armazena o resultado na posição correspondente
     - rotulos armazena o rotulo que aquele objeto de treino possui, na mesma posição do resultado de sua distancia em relação ao objeto de teste.
@@ -436,18 +502,27 @@ int main()
                 resultados[linhaTreinoAtual] = selecDist( matTreino[linhaTreinoAtual], matTeste[linhaTesteAtual], (featuresTreino - 1), r[exeAtual], tDist[exeAtual] );
                 rotulos[linhaTreinoAtual] = matTreino[linhaTreinoAtual][featuresTreino-1];
             }
+            rotulosTeste[linhaTesteAtual] = matTeste[linhaTesteAtual][featuresTeste-1];
             bubbleSortDouble( &resultados, &rotulos, linhasTreino - 1 ); //Ordena o vetor resultados de forma crescente, movendo o rótulo também de acordo com suas posições
             rotulosAvaliados[linhaTesteAtual] = KNN( k[exeAtual], rotulos ); 
         }
 
+        numRotulos = maiorNum( rotulosTeste, linhasTeste );
+        matConfus = matrizConfusao( rotulosAvaliados, rotulosTeste, numRotulos, linhasTeste);
         precisao = acuracia( rotulosAvaliados, matTeste, linhasTeste, featuresTeste );
-        writeFile( exeAtual, rotulosAvaliados, linhasTeste, pathSaida, precisao );
-
+        writeFile( exeAtual, rotulosAvaliados, linhasTeste, pathSaida, precisao, matConfus, numRotulos );
+        
+        for ( i = 0 ; i < numRotulos ; i++ )
+        {
+            free(matConfus[i]);
+        }
+        free(matConfus);
         printf("OK\n");
         exeAtual++;
     }
     printf("Finalizado!\n");
       
+    
     for( i = 0 ; i < linhasTreino ; i++ )
     {   
         free(matTreino[i]);
@@ -456,6 +531,7 @@ int main()
     {   
         free(matTeste[i]);
     }
+    free(rotulosTeste);
     free(rotulosAvaliados);
     free(rotulos);
     free(resultados);
