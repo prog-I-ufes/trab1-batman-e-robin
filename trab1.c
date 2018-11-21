@@ -239,7 +239,7 @@ float distMinkowsky( float* vetor1, float* vetor2, float r, int tamanho )
 
     for ( i = 0 ; i < tamanho ; i++ )
     {
-        somatorio = somatorio + pow ( ( abs( vetor1[i] - vetor2[i] ) ), r );
+        somatorio = somatorio + pow ( ( fabs( vetor1[i] - vetor2[i] ) ), r );
     }
 
     distancia = pow ( somatorio, 1/r );
@@ -261,7 +261,7 @@ float distChebychev( float* vetor1, float* vetor2, int tamanho )
     */
     for ( i = 0 ; i < tamanho ; i++ )
     {
-        diferencas[i] = abs(vetor2[i] - vetor1[i]);
+        diferencas[i] = fabs(vetor2[i] - vetor1[i]);
         if ( diferencas[i] > distancia ) { distancia = diferencas[i]; }
     }
     
@@ -270,7 +270,7 @@ float distChebychev( float* vetor1, float* vetor2, int tamanho )
     return distancia;
 }
 
-float dist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist )
+float selDist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist )
 {
     float resultado;
 
@@ -287,7 +287,7 @@ float dist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist )
     return resultado;
 }
 //====================[Funções de Distancia]============================================================================
-void bubbleSort( float **result, float **rot, int tam)
+void bubbleSortDouble( float **result, float **rot, int tam)  //Ordena um vetor de forma crescente e traz para sua mesma posiçao o valor em outro vetor
 {
     int i, j;
     float auxResult, auxRot;
@@ -309,21 +309,23 @@ void bubbleSort( float **result, float **rot, int tam)
     }
 }
 
-float defLabel( int k , float *rotulos )
+float KNN( int k , float *rotulos ) //Define o rótulo predominante entre os K primeiros rótulos
 {
-    int i, j, vezesAparece = 1 , vezesApareceAux = 0;
+    int i, j, vezesAparece = 0 , vezesApareceAux = 0;
     float rotuloAtual = rotulos[0] , rotuloPredominante = rotulos[0] ;
 
     for ( i = 0 ; i < k ; i++ )
     {
         for ( j = 0 ; j  < k ; j++ )
-        {
-            if ( rotulos[i] == rotulos[j] && i != j ) 
+        {   
+            if ( rotulos[i] == rotulos[j] ) 
             { 
                 vezesAparece++;
             }
         }
+        
         if ( vezesAparece > vezesApareceAux ) { vezesApareceAux = vezesAparece; rotuloPredominante = rotulos[i]; }
+        vezesAparece = 0;
     }
 
     return rotuloPredominante;
@@ -333,7 +335,7 @@ float defLabel( int k , float *rotulos )
 
 int main()
 {   
-    int i, z, j, contador, *k, exeTot, exeAtual = 0, linhaTesteAtual, linhaTreinoAtual, linhasTreino, featuresTreino, linhasTeste, featuresTeste;
+    int i, z, j, contador, *k, exeTot, exeAtual = 0, linhaTesteAtual = 0, linhaTreinoAtual = 0, linhasTreino, featuresTreino, linhasTeste, featuresTeste;
     float *r, **matTreino, **matTeste, *resultados, *rotulos, *rotulosAvaliados, precisao;
     char *pathTreino, *pathTeste, *pathSaida, *tDist;
     FILE *configTxt;
@@ -342,7 +344,7 @@ int main()
     readPath( &pathTreino, &pathTeste, &pathSaida );
     readParam( &k, &tDist, &r, &exeTot );
     printf("OK\n");
-    
+
     printf(" >Obtendo parametros de treino -> ");
     matTreino = loadFeatures( pathTreino, &linhasTreino, &featuresTreino );
     printf("OK\n");
@@ -357,29 +359,34 @@ int main()
     rotulos = (float *) malloc( linhasTreino * sizeof(float));
     rotulosAvaliados = (float *) malloc( linhasTeste * sizeof(float));
 
+    exeTot = 1;
     while( exeAtual < exeTot )
     {   
         for ( linhaTesteAtual = 0 ; linhaTesteAtual < linhasTeste ; linhaTesteAtual++ )
         {
             for ( linhaTreinoAtual = 0 ; linhaTreinoAtual < linhasTreino ; linhaTreinoAtual++ )
-            {
-                resultados[linhaTreinoAtual] = dist( matTreino[linhaTreinoAtual], matTeste[linhaTesteAtual], (featuresTreino - 1), r[exeAtual], tDist[exeAtual] );
-                rotulos[linhaTreinoAtual] = matTreino[linhaTreinoAtual][featuresTreino-1]; 
+            {   
+                resultados[linhaTreinoAtual] = selDist( matTreino[linhaTreinoAtual], matTeste[linhaTesteAtual], (featuresTreino - 1), r[exeAtual], tDist[exeAtual] );
+                rotulos[linhaTreinoAtual] = matTreino[linhaTreinoAtual][featuresTreino-1];
+                //resultados armazena as distancias entre o objeto de teste e cada um dos objetos do treino, e armazena o resultado na posição correspondente
+                //rotulos armazena o rotulo que aquele objeto de treino possui, na mesma posição do resultado de sua distancia em relação ao objeto de teste.
             }
+            bubbleSortDouble( &resultados, &rotulos, linhasTreino - 1 ); //Ordena o vetor resultados de forma crescente, movendo o rótulo também de acordo com suas posições
 
-            bubbleSort( &resultados, &rotulos, linhasTreino - 1 );
-            for ( z = 0 ; z < k[exeAtual] ; z++ )
-            {
-                printf("Dist: %.2f, Rotulo: %.2f\n", resultados[z], rotulos[z]);
-            }
-            rotulosAvaliados[linhaTesteAtual] = defLabel( k[exeAtual], rotulos ); //Resposta de todos os rotulos  do treino classificados
-            printf("%f\n", rotulosAvaliados[linhaTesteAtual] );
+            rotulosAvaliados[linhaTesteAtual] = KNN( k[exeAtual], rotulos ); //Resposta de todos os rotulos do treino classificados
+            printf("%f\n", rotulosAvaliados[linhaTesteAtual] ); //rm
         }
-        printf("=============================\n");
 
+        printf("=============================\n"); //rm
 
         exeAtual++;
     }
+
+
+
+
+
+
 
     printf("Finalizado!\n");
       
