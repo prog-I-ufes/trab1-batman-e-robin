@@ -8,7 +8,7 @@ Código de erros
 Informa em qual função o erro ocorreu e o tipo do erro
 
 RR - readPath Null   || FL - fileLines Null || LF - loadFeatures Null ||  FF - fileFeatures NULL
-RP - readParam Null  ||                     ||                        || 
+RP - readParam Null  || WF - writeFile Null ||                        || 
                      ||                     ||                        || 
                      ||                     ||                        ||                                           
 */
@@ -19,14 +19,17 @@ int fileLines( char *nome );
 float** loadFeatures( char *pathArq, int *linhas, int *features );
 void readPath( char **pTreino, char **pTeste, char **pSaida );
 void readParam( int **k, char **tDist, float **r , int *execucoes );
+void writeFile( int numExe, float *rotulos, int qtdRotulos, char *pathEscrita, float acuracia );
 char* stringAlloc( int tam );
 float** initMatF( int m, int n );
+int sizeInString( int num );
 void bubbleSortDouble( float **result, float **rot, int tam );
 float distEuclideana( float* vetor1, float* vetor2, int tamanho );
 float distMinkowsky( float* vetor1, float* vetor2, float r, int tamanho );
 float distChebychev( float* vetor1, float* vetor2, int tamanho );
 float selecDist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist );
 float KNN( int k , float *rotulos );
+float acuracia( float *rotulos, float **matTeste, int tamTeste, int posRotulo );
 //====================[Cabeçalho das Funções]======================================================================
 
 
@@ -189,6 +192,31 @@ void readParam( int **k, char **tDist, float **r , int *execucoes )// pq **??
     
     fclose(config);
 }
+
+void writeFile( int numExe, float *rotulos, int qtdRotulos, char *pathEscrita, float acuracia )
+{   
+    int i, tamanhoNumero, tamanhoPath;
+    char *caminho;
+    FILE *predicao;
+
+    tamanhoNumero = sizeInString( numExe + 1);
+    tamanhoPath = strlen(pathEscrita);
+    
+    caminho = (char *) malloc( (tamanhoNumero + tamanhoPath + 14) * sizeof(char) );
+    sprintf(caminho, "%spredicao_%d.txt", pathEscrita, (numExe + 1) );
+
+    predicao = fopen(caminho, "w");
+    fprintf(predicao, "%.2f\n", acuracia);
+    if ( predicao == NULL ) {  printf("Erro ao abrir arquivo(WF). Encerrando programa...\n"); exit(1); }
+
+    for( i = 0 ; i < qtdRotulos ; i++ )
+    {
+        fprintf(predicao, "%.0f\n", rotulos[i] - 1 );
+    }
+
+    fclose(predicao);
+    free(caminho);
+}
 //====================[Funçoes de Arquivo]==============================================================================
 
 
@@ -237,6 +265,16 @@ void bubbleSortDouble( float **result, float **rot, int tam)  //Ordena um vetor 
             }
         }
     }
+}
+
+int sizeInString( int num )
+{
+    if ( num >= -9 && num <= 9 ) { return 1; }
+    else if ( num >= -99 && num <= -10 || num >= 10 && num <= 99 ) { return 2; }
+    else if ( num >= -999 && num <= -100 || num >= 100 && num <= 999 ) { return 3; }
+    else if ( num >= -9999 && num <= -1000 || num >= 1000 && num <= 9999 ) { return 4; }
+    else if ( num >= -99999 && num <= -10000 || num >= 10000 && num <= 99999 ) { return 5; }
+    //Só mede até tamanho 5 msm
 }
 //====================[Funçoes de Vetor/Matriz]=========================================================================
 
@@ -312,7 +350,7 @@ float selecDist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDi
 }
 //====================[Funções de Distancia]============================================================================
 
-
+//====================[Classificação de Saida]==========================================================================
 float KNN( int k , float *rotulos ) //Define o rótulo predominante entre os K primeiros rótulos
 {
     int i, j, vezesAparece = 0 , vezesApareceAux = 0;
@@ -335,39 +373,23 @@ float KNN( int k , float *rotulos ) //Define o rótulo predominante entre os K p
     return rotuloPredominante;
 }
 
-int sizeInString( int num )
+
+float acuracia( float *rotulos, float **matTeste, int tamTeste, int posRotulo )
 {
-    if ( num >= -9 && num <= 9 ) { return 1; }
-    else if ( num >= -99 && num <= -10 || num >= 10 && num <= 99 ) { return 2; }
-    else if ( num >= -999 && num <= -100 || num >= 100 && num <= 999 ) { return 3; }
-    else if ( num >= -9999 && num <= -1000 || num >= 1000 && num <= 9999 ) { return 4; }
-    else if ( num >= -99999 && num <= -10000 || num >= 10000 && num <= 99999 ) { return 5; }
-    //Só mede até tamanho 5 msm
-}
+    int i;
+    float acertos = 0, resultado;
 
-void writeFile( int numExe, float *rotulos, int qtdRotulos, char *pathEscrita )
-{   
-    int i, tamanhoNumero, tamanhoPath;
-    char *caminho;
-    FILE *predicao;
-
-    
-    tamanhoNumero = sizeInString( numExe + 1);
-    tamanhoPath = strlen(pathEscrita);
-
-    caminho = (char *) malloc( (tamanhoNumero + tamanhoPath + 6) * sizeof(char) );
-    sprintf(caminho, "%spredicao_%d.txt", pathEscrita, (numExe + 1) );
-
-    predicao = fopen(caminho, "w");
-    if ( predicao == NULL ) {  printf("Erro ao abrir arquivo(WF). Encerrando programa...\n"); exit(1); }
-
-    for( i = 0 ; i < qtdRotulos ; i++ )
+    for ( i = 0 ; i < tamTeste ; i++ )
     {
-        fprintf(predicao, "%.0f\n", rotulos[i] - 1 );
+        if ( rotulos[i] == matTeste[i][posRotulo-1] ) { acertos++; }
     }
 
-    fclose(predicao);
+    resultado = acertos/tamTeste;
+
+    return resultado;
 }
+//====================[Classificação de Saida]==========================================================================
+
 
 
 int main()
@@ -378,7 +400,7 @@ int main()
     FILE *predicao;
 
     printf(">Obtendo parametros de configuracao -> ");
-    readPath( &pathTreino, &pathTeste, &pathSaida );
+    readPath( &pathTreino, &pathTeste, &pathSaida );///////////TEM QUE ALOCAR DINAMICAMENTE ISSO!!!!!!!
     readParam( &k, &tDist, &r, &exeTot );
     printf("OK\n");
 
@@ -406,9 +428,11 @@ int main()
         printf(" -Execucao %d: ", exeAtual+1 );
 
         for ( linhaTesteAtual = 0 ; linhaTesteAtual < linhasTeste ; linhaTesteAtual++ )
-        {
+        {   
+            //printf("=======Linha de teste atual: %d=================\n", linhaTesteAtual + 1); //Apagar isso depois so pra saber em qual linha ta
             for ( linhaTreinoAtual = 0 ; linhaTreinoAtual < linhasTreino ; linhaTreinoAtual++ )
             {   
+                //printf("Linha de treino atual: %d\n", linhaTreinoAtual + 1);//Apagar isso depois so pra saber em qual linha ta
                 resultados[linhaTreinoAtual] = selecDist( matTreino[linhaTreinoAtual], matTeste[linhaTesteAtual], (featuresTreino - 1), r[exeAtual], tDist[exeAtual] );
                 rotulos[linhaTreinoAtual] = matTreino[linhaTreinoAtual][featuresTreino-1];
             }
@@ -416,7 +440,8 @@ int main()
             rotulosAvaliados[linhaTesteAtual] = KNN( k[exeAtual], rotulos ); 
         }
 
-        writeFile( exeAtual, rotulosAvaliados, linhasTeste, pathSaida );
+        precisao = acuracia( rotulosAvaliados, matTeste, linhasTeste, featuresTeste );
+        writeFile( exeAtual, rotulosAvaliados, linhasTeste, pathSaida, precisao );
 
         printf("OK\n");
         exeAtual++;
