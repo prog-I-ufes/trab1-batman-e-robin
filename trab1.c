@@ -21,9 +21,12 @@ void readPath( char **pTreino, char **pTeste, char **pSaida );
 void readParam( int **k, char **tDist, float **r , int *execucoes );
 char* stringAlloc( int tam );
 float** initMatF( int m, int n );
+void bubbleSortDouble( float **result, float **rot, int tam );
 float distEuclideana( float* vetor1, float* vetor2, int tamanho );
 float distMinkowsky( float* vetor1, float* vetor2, float r, int tamanho );
 float distChebychev( float* vetor1, float* vetor2, int tamanho );
+float selecDist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist );
+float KNN( int k , float *rotulos );
 //====================[Cabeçalho das Funções]======================================================================
 
 
@@ -214,6 +217,27 @@ float** initMatF( int m, int n )
     return matriz;
 }
 
+void bubbleSortDouble( float **result, float **rot, int tam)  //Ordena um vetor de forma crescente e traz para sua mesma posiçao o valor em outro vetor
+{
+    int i, j;
+    float auxResult, auxRot;
+
+    for ( j = tam ; j > 0 ; j-- )
+    {
+        for( i = 0 ; i < j ; i++ )
+        {
+            if ( (*result)[i] > (*result)[i+1] )
+            {
+                auxResult = (*result)[i];
+                auxRot = (*rot)[i];
+                (*result)[i] = (*result)[i+1];
+                (*rot)[i] = (*rot)[i+1];
+                (*result)[i+1] = auxResult;
+                (*rot)[i+1] = auxRot;
+            }
+        }
+    }
+}
 //====================[Funçoes de Vetor/Matriz]=========================================================================
 
 
@@ -270,7 +294,7 @@ float distChebychev( float* vetor1, float* vetor2, int tamanho )
     return distancia;
 }
 
-float selDist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist )
+float selecDist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist )
 {
     float resultado;
 
@@ -287,27 +311,7 @@ float selDist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist
     return resultado;
 }
 //====================[Funções de Distancia]============================================================================
-void bubbleSortDouble( float **result, float **rot, int tam)  //Ordena um vetor de forma crescente e traz para sua mesma posiçao o valor em outro vetor
-{
-    int i, j;
-    float auxResult, auxRot;
 
-    for ( j = tam ; j > 0 ; j-- )
-    {
-        for( i = 0 ; i < j ; i++ )
-        {
-            if ( (*result)[i] > (*result)[i+1] )
-            {
-                auxResult = (*result)[i];
-                auxRot = (*rot)[i];
-                (*result)[i] = (*result)[i+1];
-                (*rot)[i] = (*rot)[i+1];
-                (*result)[i+1] = auxResult;
-                (*rot)[i+1] = auxRot;
-            }
-        }
-    }
-}
 
 float KNN( int k , float *rotulos ) //Define o rótulo predominante entre os K primeiros rótulos
 {
@@ -331,25 +335,58 @@ float KNN( int k , float *rotulos ) //Define o rótulo predominante entre os K p
     return rotuloPredominante;
 }
 
+int sizeInString( int num )
+{
+    if ( num >= -9 && num <= 9 ) { return 1; }
+    else if ( num >= -99 && num <= -10 || num >= 10 && num <= 99 ) { return 2; }
+    else if ( num >= -999 && num <= -100 || num >= 100 && num <= 999 ) { return 3; }
+    else if ( num >= -9999 && num <= -1000 || num >= 1000 && num <= 9999 ) { return 4; }
+    else if ( num >= -99999 && num <= -10000 || num >= 10000 && num <= 99999 ) { return 5; }
+    //Só mede até tamanho 5 msm
+}
+
+void writeFile( int numExe, float *rotulos, int qtdRotulos, char *pathEscrita )
+{   
+    int i, tamanhoNumero, tamanhoPath;
+    char *caminho;
+    FILE *predicao;
+
+    
+    tamanhoNumero = sizeInString( numExe + 1);
+    tamanhoPath = strlen(pathEscrita);
+
+    caminho = (char *) malloc( (tamanhoNumero + tamanhoPath + 6) * sizeof(char) );
+    sprintf(caminho, "%spredicao_%d.txt", pathEscrita, (numExe + 1) );
+
+    predicao = fopen(caminho, "w");
+    if ( predicao == NULL ) {  printf("Erro ao abrir arquivo(WF). Encerrando programa...\n"); exit(1); }
+
+    for( i = 0 ; i < qtdRotulos ; i++ )
+    {
+        fprintf(predicao, "%.0f\n", rotulos[i] - 1 );
+    }
+
+    fclose(predicao);
+}
 
 
 int main()
 {   
-    int i, z, j, contador, *k, exeTot, exeAtual = 0, linhaTesteAtual = 0, linhaTreinoAtual = 0, linhasTreino, featuresTreino, linhasTeste, featuresTeste;
+    int i, j, *k, exeTot, exeAtual = 0, linhaTesteAtual = 0, linhaTreinoAtual = 0, linhasTreino, featuresTreino, linhasTeste, featuresTeste;
     float *r, **matTreino, **matTeste, *resultados, *rotulos, *rotulosAvaliados, precisao;
     char *pathTreino, *pathTeste, *pathSaida, *tDist;
-    FILE *configTxt;
+    FILE *predicao;
 
-    printf(" >Obtendo parametros de configuracao -> ");
+    printf(">Obtendo parametros de configuracao -> ");
     readPath( &pathTreino, &pathTeste, &pathSaida );
     readParam( &k, &tDist, &r, &exeTot );
     printf("OK\n");
 
-    printf(" >Obtendo parametros de treino -> ");
+    printf(">Obtendo parametros de treino -> ");
     matTreino = loadFeatures( pathTreino, &linhasTreino, &featuresTreino );
     printf("OK\n");
     
-    printf(" >Obtendo parametros de teste -> ");
+    printf(">Obtendo parametros de teste -> ");
     matTeste = loadFeatures( pathTeste, &linhasTeste, &featuresTeste );
     printf("OK\n");
 
@@ -358,43 +395,34 @@ int main()
     resultados = (float *) malloc( linhasTreino * sizeof(float));
     rotulos = (float *) malloc( linhasTreino * sizeof(float));
     rotulosAvaliados = (float *) malloc( linhasTeste * sizeof(float));
+    /*
+    - resultados armazena as distancias entre o objeto de teste e cada um dos objetos do treino, e armazena o resultado na posição correspondente
+    - rotulos armazena o rotulo que aquele objeto de treino possui, na mesma posição do resultado de sua distancia em relação ao objeto de teste.
+    - rotulosAvaliados é a resposta de todos os rotulos do treino já classificados
+    */
 
-    exeTot = 1;
-    while( exeAtual < exeTot )
+    while( exeAtual < exeTot ) //Executa de acordo com os parametros fornecidos pelo config
     {   
+        printf(" -Execucao %d: ", exeAtual+1 );
+
         for ( linhaTesteAtual = 0 ; linhaTesteAtual < linhasTeste ; linhaTesteAtual++ )
         {
             for ( linhaTreinoAtual = 0 ; linhaTreinoAtual < linhasTreino ; linhaTreinoAtual++ )
             {   
-                resultados[linhaTreinoAtual] = selDist( matTreino[linhaTreinoAtual], matTeste[linhaTesteAtual], (featuresTreino - 1), r[exeAtual], tDist[exeAtual] );
+                resultados[linhaTreinoAtual] = selecDist( matTreino[linhaTreinoAtual], matTeste[linhaTesteAtual], (featuresTreino - 1), r[exeAtual], tDist[exeAtual] );
                 rotulos[linhaTreinoAtual] = matTreino[linhaTreinoAtual][featuresTreino-1];
-                //resultados armazena as distancias entre o objeto de teste e cada um dos objetos do treino, e armazena o resultado na posição correspondente
-                //rotulos armazena o rotulo que aquele objeto de treino possui, na mesma posição do resultado de sua distancia em relação ao objeto de teste.
             }
             bubbleSortDouble( &resultados, &rotulos, linhasTreino - 1 ); //Ordena o vetor resultados de forma crescente, movendo o rótulo também de acordo com suas posições
-
-            rotulosAvaliados[linhaTesteAtual] = KNN( k[exeAtual], rotulos ); //Resposta de todos os rotulos do treino classificados
-            printf("%f\n", rotulosAvaliados[linhaTesteAtual] ); //rm
+            rotulosAvaliados[linhaTesteAtual] = KNN( k[exeAtual], rotulos ); 
         }
 
-        printf("=============================\n"); //rm
+        writeFile( exeAtual, rotulosAvaliados, linhasTeste, pathSaida );
 
+        printf("OK\n");
         exeAtual++;
     }
-
-
-
-
-
-
-
     printf("Finalizado!\n");
       
-
-
-
-
-    
     for( i = 0 ; i < linhasTreino ; i++ )
     {   
         free(matTreino[i]);
