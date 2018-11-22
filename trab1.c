@@ -1,3 +1,8 @@
+/*
+    TRABALHO COMPUTACIONAL - PROGRAMAÇÃO II
+              CLASSIFICADOR KNN
+   Bruno Belmock Santos e Kevin Vieira Izabel
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
