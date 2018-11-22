@@ -16,22 +16,26 @@ RP - readParam Null  || WF - writeFile Null ||                        ||
 //====================[Cabeçalho das Funções]======================================================================
 int fileFeatures( char *nome, int linha );
 int fileLines( char *nome );
-float** loadFeatures( char *pathArq, int *linhas, int *features );
+int charLine( char *nomeArq, int linhaSelec );
 void readPath( char **pTreino, char **pTeste, char **pSaida );
 void readParam( int **k, char **tDist, float **r , int *execucoes );
 void writeFile( int numExe, float *rotulos, int qtdRotulos, char *pathEscrita, float acuracia, int **matConfus, int numRotulos );
-int** matrizConfusao( float *rotulosAvaliados, float *rotulosTeste, int numRotulos, int qtdAmostras );
+float** loadFeatures( char *pathArq, int *linhas, int *features );
+
+int sizeInString( int num );
 char* stringAlloc( int tam );
 float** initMatF( int m, int n );
-int sizeInString( int num );
-void bubbleSortDouble( float **result, float **rot, int tam );
+float maiorNum( float *vetor, int tam );
+
 float distEuclideana( float* vetor1, float* vetor2, int tamanho );
 float distMinkowsky( float* vetor1, float* vetor2, float r, int tamanho );
 float distChebychev( float* vetor1, float* vetor2, int tamanho );
 float selecDist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist );
+
+int** matrizConfusao( float *rotulosAvaliados, float *rotulosTeste, int numRotulos, int qtdAmostras );
+void bubbleSortDouble( float **result, float **rot, int tam );
 float KNN( int k , float *rotulos );
 float acuracia( float *rotulos, float **matTeste, int tamTeste, int posRotulo );
-float maiorNum( float *vetor, int tam );
 //====================[Cabeçalho das Funções]======================================================================
 
 
@@ -59,7 +63,7 @@ int fileFeatures( char *nome, int linha ) //Calcula a quantidade de features da 
     return 0;
 }
 
-int fileLines( char *nome ) 
+int fileLines( char *nome )  //Informa quantas linhas existem no arquivo
 {
     int linhas = 0;
     char caractere;
@@ -78,7 +82,31 @@ int fileLines( char *nome )
     return linhas;
 }
 
-float** loadFeatures( char *pathArq, int *linhas, int *features )
+int charLine( char *nomeArq, int linhaSelec ) //Informa quantos caracteres existe na linha informada do arquivo
+{
+    int cont = 0, linhaAtual = 1, qtdChar = 0;
+    char caractere;
+    FILE *arquivo;
+
+    arquivo = fopen( nomeArq, "r");
+    if ( arquivo == NULL ) { printf("Erro ao abrir arquivo(CL). Encerrando programa...\n"); exit(1); }
+
+    while( !feof(arquivo) )
+    {   
+        caractere = fgetc(arquivo);
+        if ( linhaAtual != linhaSelec )
+        {
+            if ( caractere == '\n') { linhaAtual++; }
+        }
+        else if ( caractere != '\n' ) { qtdChar++; }
+             else { qtdChar++; break; }
+    }
+
+    fclose(arquivo);
+    return qtdChar;
+}
+
+float** loadFeatures( char *pathArq, int *linhas, int *features ) //Carrega todos os features e rotulos em uma matriz alocada dinamicamente de tamanho ( linhas x colunas )
 {   
     int i, j;
     float **mat;
@@ -106,10 +134,10 @@ float** loadFeatures( char *pathArq, int *linhas, int *features )
     return mat;
 }
 
-void readPath( char **pTreino, char **pTeste, char **pSaida )
+void readPath( char **pTreino, char **pTeste, char **pSaida ) //Le o caminho onde está localizado a base de teste, a base de treino e onde será escrito a saida
 {   
-    int contador = 1, tamanho;
-    char *stringPath, strAux[100];
+    int contador = 1, tamanho, tamString;
+    char *strAux;
     FILE *config;
 
     config = fopen("config.txt", "r");
@@ -117,10 +145,12 @@ void readPath( char **pTreino, char **pTeste, char **pSaida )
     
     do
     {
-        fgets(strAux, 99, config);
-        tamanho = strlen(strAux);
+        tamanho = charLine("config.txt", contador);
+
+        strAux = stringAlloc(tamanho+3);
+        fgets(strAux, tamanho+1, config);
         strAux[tamanho-1] = '\0';
-        
+
         switch(contador)
         {
             case 1: *pTreino = stringAlloc(tamanho);
@@ -136,13 +166,14 @@ void readPath( char **pTreino, char **pTeste, char **pSaida )
                     break;
         }
 
+        free(strAux);
         contador++;
     } while( contador < 4);
 
     fclose(config);
 }
 
-void readParam( int **k, char **tDist, float **r , int *execucoes )// pq **??
+void readParam( int **k, char **tDist, float **r , int *execucoes ) //Le e armazena os parametros de execução do config.txt, K vizinhos, tipo de distancia e R se ouver
 {
     int linhas, contador = 0, posicao = 0, bn = 0, i;
     char caractere;
@@ -195,7 +226,7 @@ void readParam( int **k, char **tDist, float **r , int *execucoes )// pq **??
     fclose(config);
 }
 
-void writeFile( int numExe, float *rotulos, int qtdRotulos, char *pathEscrita, float acuracia, int **matConfus, int numRotulos )
+void writeFile( int numExe, float *rotulos, int qtdRotulos, char *pathEscrita, float acuracia, int **matConfus, int numRotulos ) //Escreve os resultados finais no arquivo predicao.txt
 {   
     int i, j, tamanhoNumero, tamanhoPath;
     char *caminho;
@@ -230,12 +261,18 @@ void writeFile( int numExe, float *rotulos, int qtdRotulos, char *pathEscrita, f
 
     fclose(predicao);
     free(caminho);
+    /*
+    Essa função recebe os parâmetros finais que deverão ser escritos no arquivo txt e os monta em uma ordem. 
+    É verificado o tamanho que o "caminho/predicao_x.txt" terá, pois como o nome do caminho e o numero da predição podem variar, o tamanho
+    da string a ser alocada também pode. O sprintf junta todos os valores formatados em uma unica string para poder enviar à função fopen.
+    Por fim, é printado no arquivo em ordem, a acuracia, a matriz de confusão e, por ultimo, os rotulos classificados pelo programa.
+    */
 }
 //====================[Funçoes de Arquivo]==============================================================================
 
 
 //====================[Funçoes de Vetor/Matriz]=========================================================================
-char* stringAlloc( int tam )
+char* stringAlloc( int tam ) //Aloca uma string com o tamanho determinado
 {
     char *string;
 
@@ -243,7 +280,7 @@ char* stringAlloc( int tam )
     return string;
 }
 
-int** initMatI( int m, int n )
+int** initMatI( int m, int n ) //Inicializa uma matriz m x n do tipo Int
 {
     int i, **matriz;
 
@@ -256,7 +293,7 @@ int** initMatI( int m, int n )
     return matriz;
 }
 
-float** initMatF( int m, int n )
+float** initMatF( int m, int n ) //Inicializa uma matriz m x n do tipo Float
 {
     int i;
     float **matriz;
@@ -290,9 +327,14 @@ void bubbleSortDouble( float **result, float **rot, int tam)  //Ordena um vetor 
             }
         }
     }
+    /*
+    Com a intuição do método de ordenação Bubble Sort, esta função funciona de modo bem similar, ao receber um vetor principal, ela ordena seus valores
+    do menor para o maior(assim como o método original), porém, o vetor secundario recebido tem suas posições trocadas de acordo com o primeiro. Por exemplo,
+    se um vetor [3,2,1] foi ordenado para [1,2,3], seu vetor dependente (secundario) [5,7,9] será ordenado para [9,7,5].
+    */
 }
 
-int sizeInString( int num )
+int sizeInString( int num ) //Verifica o tamanho que um numero ocuparia em forma de string ( cada digito ocupa uma posição num vetor de string )
 {
     if ( num >= -9 && num <= 9 ) { return 1; }
     else if ( num >= -99 && num <= -10 || num >= 10 && num <= 99 ) { return 2; }
@@ -302,7 +344,7 @@ int sizeInString( int num )
     //Só mede até tamanho 5 msm
 }
 
-float maiorNum( float *vetor, int tam )
+float maiorNum( float *vetor, int tam ) //Verifica o maior numero de um vetor float ( no caso usei para verificar a quantidade de rotulos )
 {   
     int i;
     float maior;
@@ -371,7 +413,7 @@ float distChebychev( float* vetor1, float* vetor2, int tamanho )
     return distancia;
 }
 
-float selecDist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist )
+float selecDist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDist )//Função usada apenas para selecionar qual distancia será usada
 {
     float resultado;
 
@@ -390,7 +432,7 @@ float selecDist( float* vetor1, float* vetor2, int tamanho, float r, char tipoDi
 //====================[Funções de Distancia]============================================================================
 
 //====================[Classificação de Saida]==========================================================================
-int** matrizConfusao( float *rotulosAvaliados, float *rotulosTeste, int numRotulos, int qtdAmostras )
+int** matrizConfusao( float *rotulosAvaliados, float *rotulosTeste, int numRotulos, int qtdAmostras ) //Calcula a matriz de confusao
 {
     int i, j, auxM, auxN, **matrizConfusao;
 
@@ -412,6 +454,12 @@ int** matrizConfusao( float *rotulosAvaliados, float *rotulosTeste, int numRotul
     }
 
     return matrizConfusao;
+    /*
+    A matriz é calculada da seguinte forma: 
+    A função aloca uma matriz m x m, sendo m a quantidade de rotulos existentes no teste. Em seguida zera todos os valores dela.
+    E em um laço que tem duração igual a quantidade de rotulos de teste, ela incrementa o valor da matriz na posição (m,n), sendo m o rotulo
+    predito correto e n o rotulo classificado pelo programa.
+    */
 }
 
 float KNN( int k , float *rotulos ) //Define o rótulo predominante entre os K primeiros rótulos
@@ -437,7 +485,7 @@ float KNN( int k , float *rotulos ) //Define o rótulo predominante entre os K p
 }
 
 
-float acuracia( float *rotulos, float **matTeste, int tamTeste, int posRotulo )
+float acuracia( float *rotulos, float **matTeste, int tamTeste, int posRotulo ) //Calcula a acuracia, R = A/T
 {
     int i;
     float acertos = 0, resultado;
@@ -477,6 +525,7 @@ int main()
     matTeste = loadFeatures( pathTeste, &linhasTeste, &featuresTeste );
     printf("OK\n");
 
+
     printf("Calculando...\n");
 
     resultados = (float *) malloc( linhasTreino * sizeof(float));
@@ -493,30 +542,32 @@ int main()
     {   
         printf(" -Execucao %d: ", exeAtual+1 );
 
-        for ( linhaTesteAtual = 0 ; linhaTesteAtual < linhasTeste ; linhaTesteAtual++ )
+        for ( linhaTesteAtual = 0 ; linhaTesteAtual < linhasTeste ; linhaTesteAtual++ ) //Pega a linha i do teste e compara com todas as linhas do treino
         {   
-            //printf("=======Linha de teste atual: %d=================\n", linhaTesteAtual + 1); //Apagar isso depois so pra saber em qual linha ta
-            for ( linhaTreinoAtual = 0 ; linhaTreinoAtual < linhasTreino ; linhaTreinoAtual++ )
+            for ( linhaTreinoAtual = 0 ; linhaTreinoAtual < linhasTreino ; linhaTreinoAtual++ )//Percorre todas as linhas do treino
             {   
-                //printf("Linha de treino atual: %d\n", linhaTreinoAtual + 1);//Apagar isso depois so pra saber em qual linha ta
                 resultados[linhaTreinoAtual] = selecDist( matTreino[linhaTreinoAtual], matTeste[linhaTesteAtual], (featuresTreino - 1), r[exeAtual], tDist[exeAtual] );
                 rotulos[linhaTreinoAtual] = matTreino[linhaTreinoAtual][featuresTreino-1];
             }
+
             rotulosTeste[linhaTesteAtual] = matTeste[linhaTesteAtual][featuresTeste-1];
-            bubbleSortDouble( &resultados, &rotulos, linhasTreino - 1 ); //Ordena o vetor resultados de forma crescente, movendo o rótulo também de acordo com suas posições
+            bubbleSortDouble( &resultados, &rotulos, linhasTreino - 1 );
             rotulosAvaliados[linhaTesteAtual] = KNN( k[exeAtual], rotulos ); 
         }
 
+        //=====Calcula os resultados finais a serem exibidos=====
         numRotulos = maiorNum( rotulosTeste, linhasTeste );
         matConfus = matrizConfusao( rotulosAvaliados, rotulosTeste, numRotulos, linhasTeste);
         precisao = acuracia( rotulosAvaliados, matTeste, linhasTeste, featuresTeste );
         writeFile( exeAtual, rotulosAvaliados, linhasTeste, pathSaida, precisao, matConfus, numRotulos );
         
+        //=====Libera a memoria alocada da matriz de confusão para a proxima execução
         for ( i = 0 ; i < numRotulos ; i++ )
         {
             free(matConfus[i]);
         }
         free(matConfus);
+
         printf("OK\n");
         exeAtual++;
     }
