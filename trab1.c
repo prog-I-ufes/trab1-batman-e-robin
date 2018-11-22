@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "classificacao.h"
-#include "vetmanip.h"
-#include "filemanip.h"
-#include "calcdistancias.h"
+#include "lib/classificacao.h"
+#include "lib/vetmanip.h"
+#include "lib/filemanip.h"
+#include "lib/calcdistancias.h"
 
 int main()
 {   

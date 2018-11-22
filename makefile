@@ -1,18 +1,29 @@
 all: trab
 
-trab: trab1.c calcdistancias.h vetmanip.h filemanip.h classificacao.h calcdistancias.o vetmanip.o filemanip.o  classificacao.o
+trab: trab1.c lib/calcdistancias.h lib/vetmanip.h lib/filemanip.h lib/classificacao.h calcdistancias.o vetmanip.o filemanip.o classificacao.o
 	gcc -o trab1 trab1.c calcdistancias.o filemanip.o vetmanip.o classificacao.o -lm
 
-calcdistancias.o: calcdistancias.c calcdistancias.h
-	gcc -c calcdistancias.c
+valgrind: trab1
+	valgrind --show-leak-kinds=all --show-leak-kinds=all -v ./trab1
 
-vetmanip.o: vetmanip.c vetmanip.h
-	gcc -c vetmanip.c
+calcdistancias.o: lib/calcdistancias.c lib/calcdistancias.h
+	gcc -c lib/calcdistancias.c
 
-filemanip.o: filemanip.c filemanip.h vetmanip.h
-	gcc -c filemanip.c
+vetmanip.o: lib/vetmanip.c lib/vetmanip.h
+	gcc -c lib/vetmanip.c
 
-classificacao.o: classificacao.c classificacao.h vetmanip.h
-	gcc -c classificacao.c
+filemanip.o: lib/filemanip.c lib/filemanip.h lib/vetmanip.h
+	gcc -c lib/filemanip.c
 
-clean: rm -rf *.o trab1
+classificacao.o: lib/classificacao.c lib/classificacao.h lib/vetmanip.h
+	gcc -c lib/classificacao.c
+
+clean: 
+	rm -rf *.o trab1
+
+cleano: 
+	rm -rf *.o
+
+cleantest:
+	rm -rf config.txt "dataset/" "predicoes/"
+
