@@ -3,6 +3,9 @@ all: trab
 trab: trab1.c lib/calcdistancias.h lib/vetmanip.h lib/filemanip.h lib/classificacao.h calcdistancias.o vetmanip.o filemanip.o classificacao.o
 	gcc -o trab1 trab1.c calcdistancias.o filemanip.o vetmanip.o classificacao.o -lm
 
+exe: trab1
+	./trab1
+
 valgrind: trab1
 	valgrind --show-leak-kinds=all --show-leak-kinds=all -v ./trab1
 
