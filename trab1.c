@@ -21,6 +21,7 @@ int main()
 
     printf(">Obtendo parametros de configuracao -> ");
     readPath( &pathTreino, &pathTeste, &pathSaida );
+    readParam( &k, &tDist, &r, &exeTot );
     printf("OK\n");
 
     printf(">Obtendo parametros de treino -> ");
