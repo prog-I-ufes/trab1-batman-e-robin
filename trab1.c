@@ -20,8 +20,7 @@ int main()
     FILE *predicao;
 
     printf(">Obtendo parametros de configuracao -> ");
-    readPath( &pathTreino, &pathTeste, &pathSaida );///////////TEM QUE ALOCAR DINAMICAMENTE ISSO!!!!!!!
-    readParam( &k, &tDist, &r, &exeTot );
+    readPath( &pathTreino, &pathTeste, &pathSaida );
     printf("OK\n");
 
     printf(">Obtendo parametros de treino -> ");
