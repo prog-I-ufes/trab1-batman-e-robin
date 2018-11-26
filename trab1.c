@@ -17,7 +17,6 @@ int main()
     int i, j, *k, exeTot, exeAtual = 0, linhaTesteAtual = 0, linhaTreinoAtual = 0, linhasTreino, featuresTreino, linhasTeste, featuresTeste, **matConfus;
     float *r, **matTreino, **matTeste, *resultados, *rotulos, *rotulosAvaliados, *rotulosTeste, precisao, numRotulos;
     char *pathTreino, *pathTeste, *pathSaida, *tDist;
-    FILE *predicao;
 
     printf(">Obtendo parametros de configuracao -> ");
     readPath( &pathTreino, &pathTeste, &pathSaida );
