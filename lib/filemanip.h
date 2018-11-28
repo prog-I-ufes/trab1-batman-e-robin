@@ -1,7 +1,7 @@
 //Header das funções manipuladoras de arquivos
 #ifndef __FILEMANIP_H
 #define __FILEMANIP_H
-int fileFeatures( char *nome, int linha );
+int fileFeatures( char *nome );
 int fileLines( char *nome );
 int charLine( char *nomeArq, int linhaSelec );
 void readPath( char **pTreino, char **pTeste, char **pSaida );

@@ -106,7 +106,7 @@ int main()
 /*
 Código de erros
 Informa em qual função o erro ocorreu e o tipo do erro
-RR - readPath Null     || FL - fileLines Null  || LF - loadFeatures Null ||  
-FF - fileFeatures NULL || RP - readParam Null  || WF - writeFile Null   ||                                             
+RP - readPath Null   || FL - fileLines Null  || LF - loadFeatures Null || CL - charLine Null ||
+RM - readParam Null  || WF - writeFile Null  || FF - fileFeatures Null ||                                           
 */
 }

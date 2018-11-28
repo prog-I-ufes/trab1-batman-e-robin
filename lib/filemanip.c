@@ -4,9 +4,9 @@
 #include "vetmanip.h"
 #include "filemanip.h"
 
-int fileFeatures( char *nome, int linha ) //Calcula a quantidade de features da linha informada 
+int fileFeatures( char *nome ) //Calcula a quantidade de features do arquivo informado
 {
-    int features = 1, linhaTesteAtual = 1;
+    int features = 0;
     char caractere;
     FILE *arq;
 
@@ -16,11 +16,8 @@ int fileFeatures( char *nome, int linha ) //Calcula a quantidade de features da 
     while( !feof(arq) )
     {
         caractere = fgetc(arq);
-        if ( linhaTesteAtual == linha ) { 
-                                        if ( caractere == ',' ) { features++; } 
-                                        else if ( caractere == '\n' ) { fclose(arq); return features; }
-                                   }
-        else if ( caractere == '\n' ) { linhaTesteAtual++; }
+        if ( caractere == ',' ) { features++; } 
+        else if ( caractere == '\n' ) { fclose(arq); return features; }                         
     }
 
     fclose(arq);
@@ -81,7 +78,7 @@ float** loadFeatures( char *pathArq, int *linhas, int *features ) //Carrega todo
     if ( arquivo == NULL ) { printf("Erro ao abrir arquivo(LF). Encerrando programa...\n"); exit(1); }
 
     *linhas = fileLines( pathArq );
-    *features = fileFeatures( pathArq, *linhas );
+    *features = fileFeatures( pathArq ) + 1; 
     
     mat = initMatF( *linhas, *features );
     for( i = 0 ; i < *linhas ; i++ )
@@ -144,7 +141,7 @@ void readParam( int **k, char **tDist, float **r , int *execucoes ) //Le e armaz
     FILE *config;
 
     config = fopen("config.txt", "r");
-    if ( config == NULL ) { printf("Erro ao abrir arquivo(RP). Encerrando programa...\n"); exit(1); }
+    if ( config == NULL ) { printf("Erro ao abrir arquivo(RM). Encerrando programa...\n"); exit(1); }
     linhas = fileLines( "config.txt");
     *execucoes = linhas - 3;
 

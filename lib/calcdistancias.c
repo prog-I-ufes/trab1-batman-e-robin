@@ -20,11 +20,13 @@ float distEuclideana( float* vetor1, float* vetor2, int tamanho )
 float distMinkowsky( float* vetor1, float* vetor2, float r, int tamanho )
 {
     int i;
-    float distancia, somatorio = 0;
+    float distancia, somatorio = 0, aux;
 
     for ( i = 0 ; i < tamanho ; i++ )
-    {
-        somatorio = somatorio + pow ( ( fabs( vetor1[i] - vetor2[i] ) ), r );
+    {   
+        aux = vetor1[i] - vetor2[i];
+        if ( aux < 0 ) { aux = aux * (-1); }
+        somatorio = somatorio + pow ( aux , r );
     }
 
     distancia = pow ( somatorio, 1/r );
@@ -35,9 +37,8 @@ float distMinkowsky( float* vetor1, float* vetor2, float r, int tamanho )
 float distChebychev( float* vetor1, float* vetor2, int tamanho )
 {
     int i;
-    float distancia = 0, somatorio = 0, *diferencas;
+    float distancia = 0, somatorio = 0, diferenca;
 
-    diferencas = (float *) malloc( tamanho * sizeof(float));  
     /*
     Vetor auxiliar que armazenará todas as diferencas entre os pontos dos vetores
     Ex: distancia entre (x1,y1) e (x2,y2)
@@ -46,11 +47,12 @@ float distChebychev( float* vetor1, float* vetor2, int tamanho )
     */
     for ( i = 0 ; i < tamanho ; i++ )
     {
-        diferencas[i] = fabs(vetor2[i] - vetor1[i]);
-        if ( diferencas[i] > distancia ) { distancia = diferencas[i]; }
+        diferenca = vetor2[i] - vetor1[i];
+        if ( diferenca < 0 ) { diferenca = diferenca * (-1); }
+        if ( diferenca > distancia ) { distancia = diferenca; }
     }
-    
-    free(diferencas);
+
+
 
     return distancia;
 }
